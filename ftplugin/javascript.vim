@@ -15,7 +15,7 @@ endif
 
 if(!exists('g:tsuquyomi_is_available'))
   let g:tsuquyomi_is_available = 0
-  echom '[Tsuquyomi] Shougo/vimproc.vim is not installed. Please install it.'
+  echom '[Tsuquyomi] vim8 is not installed. Please install it.'
   finish
 endif
 if(!g:tsuquyomi_is_available)

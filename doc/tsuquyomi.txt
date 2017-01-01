@@ -50,14 +50,10 @@ This plugin provides the following functions:
 INSTALL						*tsuquyomi-install*
 
 Tsuquyomi requires the following:
-* Vim (v.7.4.0 or later)
-* Shougo/vimproc.vim (https://github.com/Shougo/vimproc.vim)
+* Vim (v.8.0.0 or later)
 * Node.js and TypeScript (v.1.5.0 or later)
 
-In the first, If you haven't installed |vimproc|, please install this.
-(Please see https://github.com/Shougo/vimproc.vim)
-
-Second, install the latest version TypeScript.
+Please install the latest version TypeScript.
 
 Prompt:
 >
@@ -66,16 +62,6 @@ Prompt:
 Third, locate Tsuquyomi to your Vim plugin directory.
 If you use |NeoBundle| for plugin management, append the following to `.vimrc` .
 >
-	NeoBundle 'Shougo/vimproc.vim', {
-	\ 'build' : {
-	\     'windows' : 'tools\\update-dll-mingw',
-	\     'cygwin' : 'make -f make_cygwin.mak',
-	\     'mac' : 'make -f make_mac.mak',
-	\     'linux' : 'make',
-	\     'unix' : 'gmake',
-	\    },
-	\ }
-	
 	NeoBundle 'Quramy/tsuquyomi'
 >
 And execute the Ex command |:NeoBundleInstall| .
@@ -94,7 +80,7 @@ COMMANDS					*tsuquyomi-commands*
 						*:TsuquyomiStartServer*
 						*:TsuStartServer*
 :TsuquyomiStartServer
-		Start TSServer process using |vimproc|.
+		Start TSServer process using.
 		If already the process is running, this command does not
 		anything.
 

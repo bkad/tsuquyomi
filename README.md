@@ -27,8 +27,7 @@ Tsuquyomi does not provide syntax-highlight nor indentation. You can use the fol
 ## How to install
 Tsuquyomi requires the following:
 
-+ [Vim](http://www.vim.org/) (v7.4.0 or later)
-+ [Shougo/vimproc.vim](https://github.com/Shougo/vimproc.vim)
++ [Vim](http://www.vim.org/) (v8.0.0 or later)
 + [Node.js](https://nodejs.org/) & [TypeScript](https://github.com/Microsoft/TypeScript) (v1.5.3 or later)
 
 ### Install TypeScript
@@ -50,12 +49,6 @@ See https://github.com/tpope/vim-pathogen for instructions to install pathogen i
 # create bundle folder if it doesn't exist
 mkdir -p ~/.vim/bundle
 
-# Install and compile procvim.vim
-git clone https://github.com/Shougo/vimproc.vim.git ~/.vim/bundle/vimproc.vim
-pushd ~/.vim/bundle/vimproc.vim
-make
-popd
-
 # Install tsuquyomi
 git clone https://github.com/Quramy/tsuquyomi.git ~/.vim/bundle/tsuquyomi
 ```
@@ -65,22 +58,10 @@ git clone https://github.com/Quramy/tsuquyomi.git ~/.vim/bundle/tsuquyomi
 If you use [NeoBundle](https://github.com/Shougo/neobundle.vim) for Vim plugin management, append the following to your `.vimrc`:
 
 ```vim
-NeoBundle 'Shougo/vimproc.vim', {
-\ 'build' : {
-\     'windows' : 'tools\\update-dll-mingw',
-\     'cygwin' : 'make -f make_cygwin.mak',
-\     'mac' : 'make -f make_mac.mak',
-\     'linux' : 'make',
-\     'unix' : 'gmake',
-\    },
-\ }
-
 NeoBundle 'Quramy/tsuquyomi'
 ```
 
 And exec `:NeoBundleInstall`.
-
-(About vimproc installation, please see [the original install guide](https://github.com/Shougo/vimproc.vim#install).)
 
 ## How to use
 

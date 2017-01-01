@@ -19,7 +19,7 @@ let s:tss_version = {'is_valid': 0, 'out': '???'}
 function! tsuquyomi#config#preconfig()
 
   if !exists('g:tsuquyomi_is_available')
-    if !has('patch8.0.0')
+    if !has('patch-8.0.0')
       " 1. vim8 installation check
       let g:tsuquyomi_is_available = 0
       call s:deleteCommand()

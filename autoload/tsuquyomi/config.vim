@@ -81,6 +81,9 @@ function! tsuquyomi#config#tsscmd()
   endif
   if g:tsuquyomi_use_dev_node_module == 0
     let l:cmd = 'tsserver'
+    if has('win32') || has('win64')
+      let l:cmd .= '.cmd'
+    endif
     if !executable(l:cmd)
       echom '[Tsuquyomi] tsserver is not installed. Try "npm -g install typescript".'
       return ''
@@ -93,6 +96,9 @@ function! tsuquyomi#config#tsscmd()
     else
       echom '[Tsuquyomi] Invalid option value "g:tsuquyomi_use_dev_node_module".'
       return ''
+    endif
+    if (has('win32') || has('win64')) && l:path !~ '\.cmd$'
+      let l:path .= '.cmd'
     endif
     if filereadable(l:path) != 1
       echom '[Tsuquyomi] tsserver.js does not exist. Try "npm install"., '.l:path

@@ -15,10 +15,9 @@ endif
 let s:script_dir = expand('<sfile>:p:h')
 
 let s:V = vital#of('tsuquyomi')
-let s:P = s:V.import('ProcessManager')
 let s:JSON = s:V.import('Web.JSON')
 let s:Filepath = s:V.import('System.Filepath')
-let s:tsq = 'tsuquyomiTSServer'
+let s:tsq = {'job':0}
 
 let s:request_seq = 0
 
@@ -34,10 +33,6 @@ function! s:error(msg)
   echoerr (a:msg)
 endfunction
 
-function! s:waitTss(sec)
-  call s:P.read_wait(s:tsq, a:sec, [])
-endfunction
-
 function! s:debugLog(msg)
   if g:tsuquyomi_debug
     echom a:msg
@@ -50,34 +45,38 @@ endfunction
 "
 " If not exsiting process of TSServer, create it.
 function! tsuquyomi#tsClient#startTss()
-  if s:P.state(s:tsq) == 'existing'
+  if type(s:tsq['job']) == 8 && job_info(s:tsq['job']).status == 'run'
     return 'existing'
   endif
   let l:cmd = substitute(tsuquyomi#config#tsscmd(), '\\', '\\\\', 'g')
-  let l:is_new = s:P.touch(s:tsq, l:cmd)
-  if l:is_new == 'new'
-    let [out, err, type] = s:P.read_wait(s:tsq, 0.1, [])
+  try
+    let s:tsq['job'] = job_start(l:cmd)
+    let s:tsq['channel'] = job_getchannel(s:tsq['job'])
+     
+    let out =  ch_readraw(s:tsq['channel'])
     let st = tsuquyomi#tsClient#statusTss()
     if !g:tsuquyomi_tsserver_debug
       if err != ''
         call s:error('Fail to start TSServer... '.err)
+        return 0
       endif
     endif
-  endif
-  return l:is_new
+  catch
+  endtry
+  return 1
 endfunction
 
 "
 "Terminate TSServer process if it exsits.
 function! tsuquyomi#tsClient#stopTss()
   if tsuquyomi#tsClient#statusTss() != 'undefined'
-    let l:res = s:P.term(s:tsq)
+    let l:res = job_stop(s:tsq['job'])
     return l:res
   endif
 endfunction
 
 function! tsuquyomi#tsClient#statusTss()
-  return s:P.state(s:tsq)
+  return job_info(s:tsq['job']).status
 endfunction
 
 "
@@ -91,29 +90,14 @@ endfunction
 function! tsuquyomi#tsClient#sendRequest(line, delay, retry_count, response_length)
   "call s:debugLog('called! '.a:line)
   call tsuquyomi#tsClient#startTss()
-  call s:P.writeln(s:tsq, a:line)
+  call ch_sendraw(s:tsq['channel'], a:line."\n")
 
   let l:retry = 0
   let response_list = []
 
   while len(response_list) < a:response_length
-    let [out, err, type] = s:P.read_wait(s:tsq, a:delay, ['Content-Length: \d\+'])
-    call s:debugLog('out: '.out.', type:'.type)
-    if type == 'timedout'
-      let retry_delay = 0.05
-      while l:retry < a:retry_count
-        let [out, err, type] = s:P.read_wait(s:tsq, retry_delay, ['Content-Length: \d\+'])
-        if type == 'matched'
-          call tsuquyomi#perfLogger#record('tssMatched')
-          "call s:debugLog('retry: '.l:retry.', length: '.len(response_list))
-          break
-        endif
-        let l:retry = l:retry + 1
-        call tsuquyomi#perfLogger#record('tssRetry:'.l:retry)
-      endwhile
-    endif
-
-    if type == 'matched'
+    try
+      let out = ch_readraw(s:tsq['channel'])
       let l:tmp1 = substitute(out, 'Content-Length: \d\+', '', 'g')
       let l:tmp2 = substitute(l:tmp1, '\r', '', 'g')
       let l:res_list = split(l:tmp2, '\n\+')
@@ -129,10 +113,10 @@ function! tsuquyomi#tsClient#sendRequest(line, delay, retry_count, response_leng
           call add(response_list, res_item)
         endif
       endfor
-    else
+    catch
       echom '[Tsuquyomi] TSServer request was timeout:'.a:line
       return response_list
-    endif
+    endtry
 
   endwhile
   "call s:debugLog(a:response_length.', '.len(response_list))

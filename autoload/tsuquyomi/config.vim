@@ -9,8 +9,6 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 let s:V = vital#of('tsuquyomi')
-let s:P = s:V.import('ProcessManager')
-let s:Process = s:V.import('Process')
 let s:Prelude = s:V.import('Prelude')
 let s:Filepath = s:V.import('System.Filepath')
 let s:script_dir = expand('<sfile>:p:h')
@@ -21,11 +19,11 @@ let s:tss_version = {'is_valid': 0, 'out': '???'}
 function! tsuquyomi#config#preconfig()
 
   if !exists('g:tsuquyomi_is_available')
-    if !s:P.is_available()
-      " 1. vimproc installation check
+    if !has('patch-8.0.1')
+      " 1. vim8 installation check
       let g:tsuquyomi_is_available = 0
       call s:deleteCommand()
-      echom '[Tsuquyomi] Shougo/vimproc.vim is not installed. Please install it.'
+      echom '[Tsuquyomi] vim8 is not installed. Please install it.'
       return 0
     else
       " 2. tsserver installation check
@@ -83,6 +81,9 @@ function! tsuquyomi#config#tsscmd()
   endif
   if g:tsuquyomi_use_dev_node_module == 0
     let l:cmd = 'tsserver'
+    if has('win32') || has('win64')
+      let l:cmd .= '.cmd'
+    endif
     if !executable(l:cmd)
       echom '[Tsuquyomi] tsserver is not installed. Try "npm -g install typescript".'
       return ''
@@ -96,6 +97,9 @@ function! tsuquyomi#config#tsscmd()
       echom '[Tsuquyomi] Invalid option value "g:tsuquyomi_use_dev_node_module".'
       return ''
     endif
+    if (has('win32') || has('win64')) && l:path !~ '\.cmd$'
+      let l:path .= '.cmd'
+    endif
     if filereadable(l:path) != 1
       echom '[Tsuquyomi] tsserver.js does not exist. Try "npm install"., '.l:path
       return ''
@@ -105,12 +109,21 @@ function! tsuquyomi#config#tsscmd()
   return l:cmd
 endfunction
 
+function! s:system(cmd)
+  let out = ''
+  let job = job_start([&shell, &shellcmdflag, a:cmd], {'out_cb': {ch,msg->[execute("let out .= msg"), out]}, 'out_mode': 'raw'})
+  while job_status(job) == 'run'
+    sleep 10m
+  endwhile
+  return out
+endfunction
+
 function! tsuquyomi#config#getVersion()
   if s:tss_version.is_valid
     return s:tss_version
   endif
   let l:cmd = substitute(tsuquyomi#config#tsscmd(), 'tsserver', 'tsc', '')
-  let out = s:Process.system(l:cmd.' --version')
+  let out = s:system(l:cmd.' --version')
   let pattern = '\vVersion\s+(\d+)\.(\d+)\.(\d+)-?([^\.\n\s]*)'
   let matched = matchlist(out, pattern)
   if !len(matched)
